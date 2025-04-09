@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Expense Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #f2f4f8;
+      color: #333;
+      padding: 30px 10px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2.2rem;
+      color: #444;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+    }
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    form input, form select, form button {
+      flex: 1 1 48%;
+      padding: 12px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      transition: 0.2s;
+    }
+    form button {
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+    form button:hover {
+      background-color: #45a049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 25px;
+    }
+    th, td {
+      padding: 14px;
+      text-align: center;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .delete-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .delete-btn:hover {
+      background-color: #c0392b;
+    }
+    .summary {
+      text-align: center;
+      padding-top: 20px;
+    }
+    .download-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .download-btn:hover {
+      background-color: #2980b9;
+    }
+    canvas {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    @media (max-width: 600px) {
+      form input, form select, form button {
+        flex: 1 1 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Expense Tracker</h1>
+  <div class="container">
+    <form action="/add" method="POST">
+      <input type="date" name="date" required>
+      <select name="category" required>
+        <option value="">-- Category --</option>
+        <option value="Food">Food</option>
+        <option value="Transport">Transport</option>
+        <option value="Shopping">Shopping</option>
+        <option value="Utilities">Utilities</option>
+        <option value="Other">Other</option>
+      </select>
+      <input type="number" name="amount" placeholder="Amount (₹)" step="0.01" required>
+      <button type="submit">Add Expense</button>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Category</th>
+          <th>Amount (₹)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row[1] }}</td>
+          <td>{{ row[2] }}</td>
+          <td>₹{{ row[3] }}</td>
+          <td>
+            <form action="{{ url_for('delete_expense', expense_id=row[0]) }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this expense?');">
+              <button class="delete-btn" type="submit">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="summary">
+      <canvas id="summaryChart"></canvas>
+      <form action="{{ url_for('download_pdf') }}" method="POST">
+        <button type="submit" class="download-btn">Download PDF</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    fetch("/summary_chart_data")
+      .then(res => res.json())
+      .then(data => {
+        const ctx = document.getElementById("summaryChart").getContext("2d");
+        new Chart(ctx, {
+          type: "pie",
+          data: {
+            labels: data.labels,
+            datasets: [{
+              data: data.values,
+              backgroundColor: ['#f39c12','#e74c3c','#8e44ad','#3498db','#2ecc71']
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: 'bottom',
+              }
+            }
+          }
+        });
+      });
+  </script>
+</body>
+</html>
